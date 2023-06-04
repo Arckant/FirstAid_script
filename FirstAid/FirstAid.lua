@@ -570,12 +570,7 @@ Citizen.CreateThread(function()
     end
 
     if IsControlJustReleased(1, 170) then -------------- F3
-      RequestAnimDict('combat@drag_ped@')
       
-      if not HasAnimDictLoaded('combat@drag_ped@') then
-        Citizen.Wait(1)
-      end
-      TaskPlayAnim(player, 'combat@drag_ped@', 'injured_pickup_front_plyr', 8.0, 8.0, -1, 0, 0.0)
 
     end
 
@@ -586,34 +581,34 @@ Citizen.CreateThread(function()
       end
 
         
-      if IsControlJustReleased(1, 124) then
+      if IsControlJustReleased(1, 124) then -------------- num 4
         HealerPosition(target, 'lt')
       end
-      if IsControlJustReleased(1, 126) then
+      if IsControlJustReleased(1, 126) then -------------- num 5
         HealerPosition(target, 'lm')
       end
-      if IsControlJustReleased(1, 125) then
+      if IsControlJustReleased(1, 125) then -------------- num 6
         HealerPosition(target, 'ld')
       end
-      if IsControlJustReleased(1, 117) then
+      if IsControlJustReleased(1, 117) then -------------- num 7
         HealerPosition(target, 'rt')
       end
-      if IsControlJustReleased(1, 127) then
+      if IsControlJustReleased(1, 127) then -------------- num 8
         HealerPosition(target, 'rm')
       end
-      if IsControlJustReleased(1, 118) then
+      if IsControlJustReleased(1, 118) then -------------- num 9
         HealerPosition(target, 'rd')
       end
-      if IsControlJustReleased(1, 172) then
+      if IsControlJustReleased(1, 172) then -------------- up
         PatientRotation(target, 'bs')
       end
-      if IsControlJustReleased(1, 173) then
+      if IsControlJustReleased(1, 173) then -------------- down
         PatientRotation(target, 'fs')
       end
-      if IsControlJustReleased(1, 174) then
+      if IsControlJustReleased(1, 174) then -------------- left
         PatientRotation(target, 'ls')
       end
-      if IsControlJustReleased(1, 175) then
+      if IsControlJustReleased(1, 175) then -------------- right
         PatientRotation(target, 'rs')
       end
       -- if IsControlJustReleased(1, 172) then
