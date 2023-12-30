@@ -4,7 +4,7 @@ repository 'https://github.com/Arckant'
 
 resource_type 'client_script' { name = 'FirstAid' }
 
-client_script 'xdd.lua'
+client_script 'FirstAid.lua'
 -- server_script 'server.lua'
 
 game 'gta5'
