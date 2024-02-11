@@ -1,625 +1,291 @@
-player = GetPlayerPed(-1)
+--local ped = PlayerPedId()
+--Citizen.CreateThread(function()
+--	while true do
+--		if IsControlJustReleased(1, 288) then -- F1
+--  		TriggerEvent("FirstAid")
+--  		--local _, _, _, _, patient = GetShapeTestResult(StartShapeTestRay(GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -0.9),GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.0, 0.0), 4, ped, 0))
+--			--print(patient)
+--
+--			end
+--
+--		if IsControlJustReleased(1, 289) then -- F2
+--			ClearPedTasksImmediately(GetPlayerPed(-1))
+--			DetachEntity(ped, 1, 1)
+--		end
+--		
+--		if IsControlJustReleased(1, 170) then -- F2
+--			TriggerEvent("Action", "CPR")
+--			--target = GetPedInDirection(playerpedcoords, GetPlayerLookingVector(GetPlayerPed(-1), 5))
+--			--print(target)
+--			--RequestAnimDict('wallclimb1@anim')
+--			--while not HasAnimDictLoaded('wallclimb1@anim') do
+--			--	Wait(1)
+--			--end
+--			--TaskPlayAnim(7602948, 'wallclimb1@anim', 'wallclimb1_clip', 8.0, 8.0, -1, 1026, 0.0)
+--			--RemoveAnimDict('wallclimb1@anim')
+--		end
+--		if IsControlJustReleased(1, 124) then
+--      TriggerEvent("HealerPosition", "left_top")
+--    end
+--    if IsControlJustReleased(1, 126) then
+--      TriggerEvent("HealerPosition", "left_middle")
+--    end
+--    if IsControlJustReleased(1, 125) then
+--      TriggerEvent("HealerPosition", "left_down")
+--    end
+--    if IsControlJustReleased(1, 117) then
+--      TriggerEvent("HealerPosition", "right_top")
+--    end
+--    if IsControlJustReleased(1, 127) then
+--      TriggerEvent("HealerPosition", "right_middle")
+--    end
+--    if IsControlJustReleased(1, 118) then
+--      TriggerEvent("HealerPosition", "right_down")
+--    end
+--    if IsControlJustReleased(1, 172) then
+--      TriggerEvent("PatientRotation", "back_side")
+--    end
+--    if IsControlJustReleased(1, 173) then
+--      TriggerEvent("PatientRotation", "front_side")
+--    end
+--    if IsControlJustReleased(1, 174) then
+--      TriggerEvent("PatientRotation", "left_side")
+--    end
+--    if IsControlJustReleased(1, 175) then
+--      TriggerEvent("PatientRotation", "right_side")
+--    end
+--    if IsControlJustReleased(1, 314) then
+--      TriggerEvent("HealerPosition", "top")
+--    end
+--    if IsControlJustReleased(1, 315) then
+--      TriggerEvent("HealerPosition", "down")
+--    end
+--    DrawLine(GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -0.9),GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.0, -0.9), 255, 1, 1, 100)
+--		Citizen.Wait(1)
+--	end
+--end)
 
-poses = {}
-poses['mse'] = {dict = 'amb@medic@standing@tendtodead@enter', clip = 'enter'}
-poses['msb'] = {dict = 'amb@medic@standing@tendtodead@base', clip = 'base'}
-poses['pf1'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_front_plyr'}
-poses['pl1'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_side_left_plyr'}
-poses['pr1'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_side_right_plyr'}
-poses['pf2'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_front_ped'}
-poses['pl2'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_side_left_ped'}
-poses['pr2'] = {dict = 'combat@drag_ped@', clip = 'injured_pickup_side_right_ped'}
-poses['bs'] = {dict = 'anim@gangops@morgue@table@', clip = 'body_search'}
-poses['fs'] = {dict = 'amb@lo_res_idles@', clip = 'lying_face_down_lo_res_base'}
-poses['ls'] = {dict = 'amb@lo_res_idles@', clip = 'world_human_bum_slumped_left_lo_res_base'}
-poses['rs'] = {dict = 'amb@lo_res_idles@', clip = 'world_human_bum_slumped_right_lo_res_base',}
+local patient
+local currentpose = "back_side"
+target_offset = {
+	["back_side"] = {
+                  ["top"]            = {vector3(0.0, -1.25, 0.0), 180.0,},
+                  ["down"]           = {vector3(0.0, 1.5, 0.0), 0.0,},
+                  ["left_top"]       = {vector3(0.6427872, -0.7660448, 0.0), -140.0,},
+                  ["right_top"]      = {vector3(-0.5735769, -0.8191518, 0.0), 145.0,},
+                  ["left_middle"]    = {vector3(0.75, 0.0, 0.0), -90.0,},
+                  ["right_middle"]   = {vector3(-0.75, 0.0, 0.0), 90.0,},
+                  ["left_down"]      = {vector3(0.7071072, 0.7071064, 0.0), -45.0,},
+                  ["right_down"]     = {vector3(-0.7071064, 0.7071072, 0.0), 45.0,},
+                   },
+	["front_side"] = {  
+                    ["top"]          = {vector3(0.0, 1.25, 0.0), 0.0},
+                    ["down"]         = {vector3(0.0, -1.5, 0.0), 180.0},
+                    ["left_top"]     = {vector3(-0.642788, 0.7660441, 0.0), -320.0},
+                    ["right_top"]    = {vector3(0.573576, 0.8191523, 0.0), 325.0},
+                    ["left_middle"]  = {vector3(-0.75, 0.0, 0.0), -270.0},
+                    ["right_middle"] = {vector3(0.75, 0.0, 0.0), 270.0},
+                    ["left_down"]    = {vector3(-0.7071065, -0.7071071, 0.0), -225.0},
+                    ["right_down"]   = {vector3(0.7071071, -0.7071065, 0.0), 225.0},
+                  },
+	["left_side"] = {
+                   ["top"]           = {vector3(-1.25, 0.0, 0.0), 90.0},
+                   ["down"]          = {vector3(0.8034845, 0.9575555, 0.0), -40.0},
+                   ["left_top"]      = {vector3(-1.082532, -0.625, 0.0), 120.0},
+                   ["right_top"]     = {vector3(-1.23101, 0.2170602, 0.0), 80.0},
+                   ["left_middle"]   = {vector3(0.0, -0.75, 0.0), 180.0},
+                   ["right_middle"]  = {vector3(-0.5735765, 0.8191521, 0.0), 35.0},
+                   ["left_down"]     = {vector3(0.75, 0.0, 0.0), -90.0},
+                   ["right_down"]    = {vector3(0, 1.25, 0.0), 0.0},
+                   },
+	["right_side"] = {
+                   ["top"]           = {vector3(1.25, 0.0, 0.0), -90.0},
+                   ["down"]          = {vector3(-0.9848078, 0.1736481, 0.0), 80.0},
+                   ["left_top"]      = {vector3(0.9575555, 0.8034846, 0.0), -50.0},
+                   ["right_top"]     = {vector3(0.9848078, -0.1736481, 0.0), -100.0},
+                   ["left_middle"]   = {vector3(0.3420201, 0.9396926, 0.0), -20.0},
+                   ["right_middle"]  = {vector3(0.2565151, -0.7047694, 0.0), 200.0},
+                   ["left_down"]     = {vector3(-0.6427876, 0.7660444, 0.0), 40.0},
+                   ["right_down"]    = {vector3(-0.7047694, -0.2565151, 0.0), 110.0},
+                  }
+}
 
-act = {}
-
-function GetHeading(playerped, pos)
-  local yaw = GetEntityHeading(playerped)
-  if GetCurrentPose(playerped) == 'fs' then
-    if pos == 'tp' then
-      yaw = yaw + 0.0
-    elseif pos == 'lt' then
-      yaw = yaw + -320.0
-    elseif pos == 'lm' then
-      yaw = yaw + -270.0
-    elseif pos == 'ld' then
-      yaw = yaw + -225.0
-    elseif pos == 'rt' then
-      yaw = yaw + 325.0
-    elseif pos == 'rm' then
-      yaw = yaw + 270.0
-    elseif pos == 'rd' then
-      yaw = yaw + 225.0
-    elseif pos == 'dn' then
-      yaw = yaw + 180.0
-    end
-
-  elseif GetCurrentPose(playerped) == 'ls' then
-    if pos == 'tp' then
-      yaw = yaw + 90.0
-    elseif pos == 'lt' then
-      yaw = yaw + 120.0
-    elseif pos == 'lm' then
-      yaw = yaw + 180.0
-    elseif pos == 'ld' then
-      yaw = yaw + -90.0
-    elseif pos == 'rt' then
-      yaw = yaw + 80.0
-    elseif pos == 'rm' then
-      yaw = yaw + 35.0
-    elseif pos == 'rd' then
-      yaw = yaw + 0.0
-    elseif pos == 'dn' then
-      yaw = yaw + -40.0
-    end
-
-  elseif GetCurrentPose(playerped) == 'rs' then
-    if pos == 'tp' then
-      yaw = yaw + -90.0
-    elseif pos == 'lt' then
-      yaw = yaw + -50.0
-    elseif pos == 'lm' then
-      yaw = yaw + -20.0
-    elseif pos == 'ld' then
-      yaw = yaw + 40.0
-    elseif pos == 'rt' then
-      yaw = yaw + -100.0
-    elseif pos == 'rm' then
-      yaw = yaw + 200.0
-    elseif pos == 'rd' then
-      yaw = yaw + 110.0
-    elseif pos == 'dn' then
-      yaw = yaw + 80.0
-    end
-
-  else
-    if pos == 'tp' then
-      yaw = yaw + 180.0
-    elseif pos == 'lt' then
-      yaw = yaw + -140.0
-    elseif pos == 'lm' then
-      yaw = yaw + -90.0
-    elseif pos == 'ld' then
-      yaw = yaw + -45.0
-    elseif pos == 'rt' then
-      yaw = yaw + 145.0
-    elseif pos == 'rm' then
-      yaw = yaw + 90.0
-    elseif pos == 'rd' then
-      yaw = yaw + 45.0
-    elseif pos == 'dn' then
-      yaw = yaw + 0.0
-    end
-  end
-  
-	if yaw > 180 then
-		yaw = yaw - 360
-	elseif yaw < -180 then
-		yaw = yaw + 360
-	end
-
-  return yaw
-
-end
-
-function GetCamHeading()
-  local pedyaw = GetEntityHeading(player)
-	local camyaw = GetGameplayCamRelativeHeading(player)
-	local yaw = pedyaw + camyaw
-  if yaw > 180 then
-		yaw = yaw - 360
-	elseif yaw < -180 then
-		yaw = yaw + 360
-	end
-  return yaw
-end
-
-
-function GetCurrentPose(patient)
-  if IsEntityPlayingAnim(patient, poses['bs'].dict, poses['bs'].clip, 1) then
-    return 'bs'
-  elseif IsEntityPlayingAnim(patient, poses['fs'].dict, poses['fs'].clip, 1) then
-    return 'fs'
-  elseif IsEntityPlayingAnim(patient, poses['ls'].dict, poses['ls'].clip, 1) then
-    return 'ls'
-  elseif IsEntityPlayingAnim(patient, poses['rs'].dict, poses['rs'].clip, 1) then
-    return 'rs'    
-  end
-end
-
-function GetPlayerLookingVector(playerped, radius, pos)
-	local pitch = 90
-  local pitch = pitch * math.pi / 180
-  local yaw = GetHeading(playerped, pos) * math.pi / 180
-  local x = radius * math.sin(pitch) * math.sin(yaw)
-  local y = radius * math.sin(pitch) * math.cos(yaw)
-  local z = radius * math.cos(pitch) / 10
-
-	local playerpedcoords = GetEntityCoords(playerped)
-	local xcorr = -x+ playerpedcoords.x
-	local ycorr = y+ playerpedcoords.y
-	local zcorr = z+ playerpedcoords.z
-  
-	local Vector = vector3(tonumber(xcorr), tonumber(ycorr), tonumber(zcorr))
-  
-	return Vector
-end
-
-function GetPedInDirection(coordFrom, coordTo, ped)
-  local rayHandle = StartShapeTestRay(coordFrom.x, coordFrom.y, coordFrom.z, coordTo.x, coordTo.y, coordTo.z, 8, ped, 0)
-  local _,flag_PedHit,PedCoords,_,PedHit = GetShapeTestResult(rayHandle)
-  return PedHit
-end
-
-
-function ClosePos(patient)
-  local x, y, z
-  local l = {'tp', 'lt', 'lm', 'ld', 'rt', 'rm', 'rd', 'dn'}
-  local d = 999
-  local h
-  for k, i in pairs(l) do
-    if #(GetPlayerLookingVector(patient, 1.0, i) - GetEntityCoords(player)) < d then
-      d = #(GetPlayerLookingVector(patient, 1.0, i) - GetEntityCoords(player))
+local poses = {
+	{'amb@medic@standing@tendtodead@enter', 'enter'},
+  {'amb@medic@standing@tendtodead@base', 'base'},
+  {'combat@drag_ped@', 'injured_pickup_front_plyr'},
+  {'combat@drag_ped@', 'injured_pickup_side_left_plyr'},
+  {'combat@drag_ped@', 'injured_pickup_side_right_plyr'},
+  {'combat@drag_ped@', 'injured_pickup_front_ped'},
+  {'combat@drag_ped@', 'injured_pickup_side_left_ped'},
+  {'combat@drag_ped@', 'injured_pickup_side_right_ped'},
+  {'anim@gangops@morgue@table@', 'body_search'},
+  {'amb@lo_res_idles@', 'lying_face_down_lo_res_base'},
+  {'amb@lo_res_idles@', 'world_human_bum_slumped_left_lo_res_base'},
+  {'amb@lo_res_idles@', 'world_human_bum_slumped_right_lo_res_base'}
+}
+local actions = {
+	{'missheistfbi3b_ig8_2', 'cpr_loop_paramedic'},
+  {'missheistfbi3b_ig8_2', 'cpr_loop_victim'},
+}
+function ClosePos(ps)
+  local ped = PlayerPedId()
+  local currentpose = GetCurrentPose()
+  local d = 3
+  local position = {'top', 'down', 'left_top', 'right_top', 'left_middle', 'right_middle', 'left_down', 'right_down'}
+  if ps == 1 then position = {'left_middle', 'right_middle'} end
+  if ps == 2 then position = {'top', 'down'} end
+  for _, i in pairs(position) do
+    if #(GetOffsetFromEntityInWorldCoords(patient, target_offset[currentpose][i][1]) - GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -1.0)) < d then
+      d = #(GetOffsetFromEntityInWorldCoords(patient, target_offset[currentpose][i][1]) - GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -1.0))
+      close_position = GetOffsetFromEntityInWorldCoords(patient, target_offset[currentpose][i][1])  
       h = i
-      x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.0, i))      
     end
   end
-  return x, y, z, h
+  return close_position, h
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function FirstAid(patient, i)
-  local x, y, z, h = ClosePos(patient)
-  ClearPedTasks(player)
-  if i == 0 then
-    HealerPosition(patient, h, 0)
-  else
-    HealerPosition(patient, h)
-  end
+
+function GetCurrentPose()
+  if IsEntityPlayingAnim(patient, poses[9][1], poses[9][2],   1) then currentpose = "back_side" end
+  if IsEntityPlayingAnim(patient, poses[10][1], poses[10][2], 1) then currentpose = "front_side" end
+  if IsEntityPlayingAnim(patient, poses[11][1], poses[11][2], 1) then currentpose = "left_side" end
+  if IsEntityPlayingAnim(patient, poses[12][1], poses[12][2], 1) then currentpose = "right_side" end
+  return currentpose
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function HealerPosition(patient, pos, i)
-  RequestAnimDict(poses['mse'].dict)
-  RequestAnimDict(poses['msb'].dict)
-  if not RequestAnimDict(poses['mse'].dict) and not HasAnimDictLoaded(poses['msb'].dict) then
-    Citizen.Wait(1)
+
+AddEventHandler("FirstAid", function()
+	local ped = PlayerPedId()
+  local _, _, _, _, target = GetShapeTestResult(StartShapeTestRay(GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -0.9),GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.0, 0.0), 4, ped, 0))
+	
+	if target == 0 and patient ~= nil and #(GetEntityCoords(patient) - GetEntityCoords(ped)) < 2 then target = patient end
+	if target ~= 0 then patient = target else return end
+
+  for j = 1, 2, 1 do
+    RequestAnimDict(poses[j][1])
   end
+
+  for j = 1, 2, 1 do
+    local i = 1
+    RequestAnimDict(poses[j][1])
+    while not HasAnimDictLoaded(poses[j][1]) and i < 30 do
+      i = i + 1
+      Citizen.Wait(100)
+    end	
+    if not HasAnimDictLoaded(poses[j][1]) then return end
+  end
+
+  local close_pos_coords, close_pos = ClosePos()
+  SetEntityHeading(ped, GetEntityHeading(patient) + target_offset[currentpose][close_pos][2] - 180)
+  SetEntityCoords(ped, close_pos_coords.x, close_pos_coords.y, close_pos_coords.z - 1)
+  TaskPlayAnim(ped, poses[1][1], poses[1][2], 8.0, 8.0, -1, 1, 0.0)  SetEntityHeading(ped, GetEntityHeading(ped) - 30) 
+  Citizen.Wait(1500) 
+  TaskPlayAnim(ped, poses[2][1], poses[2][2], 8.0, 8.0, -1, 1, 0.0)
+
+  for j = 1, 2 do
+    RemoveAnimDict(poses[j][1])
+  end
+
+end)
+
+AddEventHandler("HealerPosition", function(args)
+  local ped = PlayerPedId()
+  local currentpose = GetCurrentPose()
+  if patient == nil then return end
   
-  if pos == 'tp' then 
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
+  local close_pos_coords = GetOffsetFromEntityInWorldCoords(patient, target_offset[currentpose][args][1])
+  SetEntityCoords(ped, close_pos_coords.x, close_pos_coords.y, close_pos_coords.z - 1)
+  SetEntityHeading(ped, GetEntityHeading(patient) + target_offset[currentpose][args][2] - 210)
+  TaskPlayAnim(ped, poses[1][1], poses[1][2], 8.0, 8.0, -1, 1, 0.0)
+  Citizen.Wait(1500)
+  TaskPlayAnim(ped, poses[2][1], poses[2][2], 8.0, 8.0, -1, 1, 0.0)
+end)
 
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
+AddEventHandler("PatientRotation", function(args)
+  local ped = PlayerPedId()
+  local currentpose = GetCurrentPose()
+  local anim_set
+  local anim_heading
+  local _, close_pos = ClosePos()
 
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-
-  elseif pos == 'lt' then 
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-
-  elseif pos == 'lm' then 
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-
-  elseif pos == 'ld' then 
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-
-  elseif pos == 'rt' then 
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-  elseif pos == 'rm' then 
-
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-  elseif pos == 'rd' then 
-
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 0.75, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-  elseif pos == 'dn' then 
-
-    if GetCurrentPose(patient) == 'bs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.5, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.5, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.25, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      local x, y, z = table.unpack(GetPlayerLookingVector(patient, 1.0, pos))
-      SetEntityCoords(player, x, y, z-1)
-      SetEntityHeading(player, GetCamHeading(player) + -30)
-
-    end
-  end
-
-  if i == 0 then
-    TaskPlayAnim(player, poses['msb'].dict, poses['msb'].clip , 8.0, 8.0, -1, 1, 0.0)
-  else
-    TaskPlayAnim(player, poses['mse'].dict, poses['mse'].clip , 8.0, 8.0, -1, 1, 0.0)
-    Citizen.Wait(1500)
-    TaskPlayAnim(player, poses['msb'].dict, poses['msb'].clip , 8.0, 8.0, -1, 1, 0.0)
-  end
-
-  RemoveAnimDict(poses['mse'].dict)
-  RemoveAnimDict(poses['msb'].dict)
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function PatientRotation(patient, pose)
-  RequestAnimDict(poses['bs'].dict)
-  RequestAnimDict(poses['fs'].dict)
-  RequestAnimDict(poses['pf1'].dict)
-  RequestAnimDict(poses['msb'].dict)
-
-  if not HasAnimDictLoaded(poses['bs'].dict) and not HasAnimDictLoaded(poses['fs'].dict) and not HasAnimDictLoaded(poses['pf1'].dict) and not HasAnimDictLoaded(poses['msb'].dict) then
-    Citizen.Wait(1)
-  end
-  local _, _, _, heading = ClosePos(patient)
-  SetEntityHeading(player, GetHeading(patient, heading) + 150)
-
-  if pose == 'bs' then
-    if GetCurrentPose(patient) == 'ls' then
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pl2'].dict, poses['pl2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      SetEntityHeading(patient, GetHeading(patient) + 90)
-      TaskPlayAnim(player, poses['pr1'].dict, poses['pr1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pr2'].dict, poses['pr2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-    elseif GetCurrentPose(patient) == 'fs' then
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-      TaskPlayAnim(player, poses['pf1'].dict, poses['pf1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pf2'].dict, poses['pf2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-
-    elseif GetCurrentPose(patient) == 'bs' then
-      goto continue
-    else
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-    end
-    
-    TaskPlayAnim(patient, poses['bs'].dict, poses['bs'].clip, 8.0, 8.0, -1, 1, 0.0)
-    Citizen.Wait(10)
-    FirstAid(target, 0)
-
-  elseif pose == 'fs' then
-
-    
-    if GetCurrentPose(patient) == 'ls' then
-      SetEntityHeading(patient, GetHeading(patient) + -45)
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pl2'].dict, poses['pl2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      SetEntityHeading(patient, GetHeading(patient) + 90)
-      TaskPlayAnim(player, poses['pr1'].dict, poses['pr1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pr2'].dict, poses['pr2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-    elseif GetCurrentPose(patient) == 'bs' then
-      TaskPlayAnim(player, poses['pf1'].dict, poses['pf1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pf2'].dict, poses['pf2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-      
-    elseif GetCurrentPose(patient) == 'fs' then
-      goto continue
-    else
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-      Citizen.Wait(1)
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-    end
-
-    TaskPlayAnim(patient, poses['fs'].dict, poses['fs'].clip, 8.0, 8.0, -1, 1, 0.0)
-    Citizen.Wait(10)
-    FirstAid(target, 0)
-
-  elseif pose == 'ls' then
-    if GetCurrentPose(patient) == 'fs' then
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pl2'].dict, poses['pl2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 45)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      SetEntityHeading(patient, GetHeading(patient) + 45)
-      TaskPlayAnim(player, poses['pr1'].dict, poses['pr1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pr2'].dict, poses['pr2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 90)
-
-    elseif GetCurrentPose(patient) == 'bs' then
-      TaskPlayAnim(player, poses['pf1'].dict, poses['pf1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pf2'].dict, poses['pf2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 45)
-
-    elseif GetCurrentPose(patient) == 'ls' then
-      goto continue
-    else
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + 90)
-    end
-    
-    TaskPlayAnim(patient, poses['fs'].dict, poses['ls'].clip, 8.0, 8.0, -1, 1, 0.0)
-    Citizen.Wait(10)
-    FirstAid(target, 0)
-
-  elseif pose == 'rs' then
-    if GetCurrentPose(patient) == 'ls' then
-      SetEntityHeading(patient, GetHeading(patient) + -45)
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pl2'].dict, poses['pl2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + -90)
-
-    elseif GetCurrentPose(patient) == 'fs' then
-      SetEntityHeading(patient, GetHeading(patient) + 180)
-      TaskPlayAnim(player, poses['pr1'].dict, poses['pr1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pr2'].dict, poses['pr2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + -90)
-    elseif GetCurrentPose(patient) == 'bs' then
-      TaskPlayAnim(player, poses['pf1'].dict, poses['pf1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      TaskPlayAnim(patient, poses['pf2'].dict, poses['pf2'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + -90)
-
-    elseif GetCurrentPose(patient) == 'rs' then
-      goto continue
-    else
-      TaskPlayAnim(player, poses['pl1'].dict, poses['pl1'].clip, 8.0, 8.0, -1, 0, 0.0)
-      Citizen.Wait(2000)
-      SetEntityHeading(patient, GetHeading(patient) + -90.0)
-    end
-    
-    TaskPlayAnim(patient, poses['fs'].dict, poses['rs'].clip, 8.0, 8.0, -1, 1, 0.0)
-    Citizen.Wait(10)
-    FirstAid(target, 0)
-    
-  end
-
-  SetEntityHeading(player, GetHeading(patient, heading) + 150)
+  if patient == nil then return end
   
-  ::continue::
-  RemoveAnimDict(poses['bs'].dict)
-  RemoveAnimDict(poses['fs'].dict)
-  RemoveAnimDict(poses['pf1'].dict)
-  RemoveAnimDict(poses['msb'].dict)
+  if args == "back_side" and currentpose ~= "back_side" then
+    if currentpose == "front_side" then anim_set = {poses[3], poses[6], poses[9], poses[2]} anim_heading = {180, 0} end
+    if currentpose == "left_side"  then anim_set = {poses[4], poses[7], poses[9], poses[2]} anim_heading = {0, 0} end
+    if currentpose == "right_side" then anim_set = {poses[5], poses[8], poses[9], poses[2]} anim_heading = {90, 0} end
+  elseif args == "front_side" and currentpose ~= "front_side" then
+    if currentpose == "back_side"  then anim_set = {poses[3], poses[6], poses[10], poses[2]} anim_heading = {0, 180} end
+    if currentpose == "left_side"  then anim_set = {poses[4], poses[7], poses[10], poses[2]} anim_heading = {-45, 180} end
+    if currentpose == "right_side" then anim_set = {poses[5], poses[8], poses[10], poses[2]} anim_heading = {90, 180} end
+  elseif args == "left_side" and currentpose ~= "left_side" then
+    if currentpose == "front_side" then anim_set = {poses[4], poses[7], poses[11], poses[2]} anim_heading = {180, 45} end
+    if currentpose == "back_side"  then anim_set = {poses[3], poses[6], poses[11], poses[2]} anim_heading = {0, 45} end
+    if currentpose == "right_side" then anim_set = {poses[5], poses[8], poses[11], poses[2]} anim_heading = {45, 90} end
+  elseif args == "right_side" and currentpose ~= "right_side" then
+    if currentpose == "front_side" then anim_set = {poses[5], poses[8], poses[12], poses[2]} anim_heading = {180, -90} end
+    if currentpose == "back_side"  then anim_set = {poses[3], poses[6], poses[12], poses[2]} anim_heading = {-90, -90} end
+    if currentpose == "left_side"  then anim_set = {poses[4], poses[7], poses[12], poses[2]} anim_heading = {-45, -90} end
+  else
+    return
+  end
 
-end
+  for j = 1, 4, 1 do
+    local i = 1
+    RequestAnimDict(anim_set[j][1])
+    while not HasAnimDictLoaded(anim_set[j][1]) and i < 30 do
+      i = i + 1
+      Citizen.Wait(100)
+    end	
+    if not HasAnimDictLoaded(anim_set[j][1]) then return end
+  end
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function action()
+  SetEntityHeading(patient, GetEntityHeading(patient) + anim_heading[1])
 
-end
+  TaskPlayAnim(ped, anim_set[1][1], anim_set[1][2], 8.0, 8.0, -1, 0, 0.0)
+  TaskPlayAnim(patient, anim_set[2][1], anim_set[2][2], 8.0, 8.0, -1, 0, 0.0)
+  Citizen.Wait(2000)
 
-currentpatient = {}
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Citizen.CreateThread(function()
-  while true do
-    RegisterCommand("hp", function(source, args, rawCommand)
-      HealerPosition(target, args)
-    end, false)
-    
-    x3, y3, z3 = table.unpack(GetEntityCoords(player))
-    x4, y4, z4 = table.unpack(GetPlayerLookingVector(player, 1))
+  SetEntityHeading(patient, GetEntityHeading(patient) + anim_heading[2])
+  TaskPlayAnim(patient, anim_set[3][1], anim_set[3][2], 8.0, 8.0, -1, 1, 0.0)
 
-    p2 = vector3(x3,y3,z3-0.9)
-    h2 = vector3(x4,y4,z4-0.9)
+  Citizen.Wait(100)
+  local _, close_pos = ClosePos()
+  TriggerEvent("HealerPosition", close_pos)
+  TaskPlayAnim(ped, anim_set[4][1], anim_set[4][2], 8.0, 8.0, -1, 1, 0.0)
+  SetEntityHeading(ped, GetEntityHeading(ped) + 30)
+  for j = 1, 4, 1 do
+    RemoveAnimDict(anim_set[j][1])
+  end
+end)
 
-    if IsEntityAPed(GetPedInDirection(p2, h2, player)) then
-      target = GetPedInDirection(p2, h2, player)
-      currentpatient['patient'] = target
-    elseif currentpatient['patient'] ~= nil and #(GetEntityCoords(currentpatient['patient']) - GetEntityCoords(player)) < 2 then
-      target = currentpatient['patient']  
-    else
-      target = ''    
-    end
-    
-    if IsControlJustReleased(1, 289) then -------------- F2
-      ClearPedTasks(player)
-      DetachEntity(player, 1, 1)
-    end
+AddEventHandler("Action", function(args)
+  local ped = PlayerPedId()
+  local currentpose = GetCurrentPose()
+  if patient == nil then return end
+  
+  local animset
+  local _, close_pos = ClosePos(1)
+  if args == "CPR" then anim_set = {actions[1], actions[2], poses[2], poses[9]} TriggerEvent("PatientRotation", "back_side") TriggerEvent("HealerPosition", close_pos) SetEntityHeading(ped, GetEntityHeading(ped) + 60) end
 
-    if IsControlJustReleased(1, 170) then -------------- F3
-      
+  for k, v in pairs(anim_set) do
+    local i = 1
+    RequestAnimDict(anim_set[k][1])
+    while not HasAnimDictLoaded(anim_set[k][1]) and i < 30 do
+      i = i + 1
+      Citizen.Wait(100)
+    end	
+    if not HasAnimDictLoaded(anim_set[k][1]) then return end
+  end
 
-    end
+  TaskPlayAnim(ped, anim_set[1][1], anim_set[1][2], 8.0, 8.0, -1, 1, 0.0)
+  TaskPlayAnim(patient, anim_set[2][1], anim_set[2][2], 8.0, 8.0, -1, 1, 0.0)
 
-    if IsEntityAPed(target) then
+  Citizen.Wait(10000)
 
-      if IsControlJustReleased(1, 288) then -------------- F1
-        FirstAid(target, 0)
-      end
+  TaskPlayAnim(ped, anim_set[3][1], anim_set[3][2], 8.0, 8.0, -1, 1, 0.0)
+  TaskPlayAnim(patient, anim_set[4][1], anim_set[4][2], 8.0, 8.0, -1, 1, 0.0)
 
-        
-      if IsControlJustReleased(1, 124) then -------------- num 4
-        HealerPosition(target, 'lt')
-      end
-      if IsControlJustReleased(1, 126) then -------------- num 5
-        HealerPosition(target, 'lm')
-      end
-      if IsControlJustReleased(1, 125) then -------------- num 6
-        HealerPosition(target, 'ld')
-      end
-      if IsControlJustReleased(1, 117) then -------------- num 7
-        HealerPosition(target, 'rt')
-      end
-      if IsControlJustReleased(1, 127) then -------------- num 8
-        HealerPosition(target, 'rm')
-      end
-      if IsControlJustReleased(1, 118) then -------------- num 9
-        HealerPosition(target, 'rd')
-      end
-      if IsControlJustReleased(1, 172) then -------------- up
-        PatientRotation(target, 'bs')
-      end
-      if IsControlJustReleased(1, 173) then -------------- down
-        PatientRotation(target, 'fs')
-      end
-      if IsControlJustReleased(1, 174) then -------------- left
-        PatientRotation(target, 'ls')
-      end
-      if IsControlJustReleased(1, 175) then -------------- right
-        PatientRotation(target, 'rs')
-      end
-      -- if IsControlJustReleased(1, 172) then
-      --   HealerPosition(target, 'tp')
-      -- end
-      -- if IsControlJustReleased(1, 173) then
-      --   HealerPosition(target, 'dn')
-      -- end
-    end
-
-    -- DrawLine(ClosePos(target), GetEntityCoords(player), 255, 0, 255, 10000)
-    Citizen.Wait(1)
+  for k, v in pairs(anim_set) do
+    RemoveAnimDict(anim_set[k][1])
   end
 end)
